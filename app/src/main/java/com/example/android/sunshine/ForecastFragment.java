@@ -35,6 +35,8 @@ import java.util.Date;
  */
 public class ForecastFragment extends Fragment {
 
+    private ArrayAdapter<String> mForecastAdapter;
+
     public ForecastFragment() {
     }
 
@@ -58,7 +60,7 @@ public class ForecastFragment extends Fragment {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
             FetchWeatherTask weatherTask = new FetchWeatherTask();
-            weatherTask.execute("78521");
+            weatherTask.execute("78521,USA");
             return true;
         } else if (id == R.id.action_settings) {
             return true;
@@ -90,7 +92,7 @@ public class ForecastFragment extends Fragment {
         // Now that we have some dummy forecast data, create an ArrayAdapter.
         // The ArrayAdapter will take data from a source (like  your dummy forecast)
         // and use it to populate the ListView its attached to.
-        ArrayAdapter<String> forecastAdapter = new ArrayAdapter<String>(
+        mForecastAdapter = new ArrayAdapter<String>(
                 getActivity(), // The current context
                 R.layout.list_item_forecast, // ID of list item layout
                 R.id.list_item_forecast_textview, // ID of textview to populate
@@ -99,7 +101,7 @@ public class ForecastFragment extends Fragment {
 
         // set list adapter
         ListView lv = (ListView) rootView.findViewById(R.id.listview_forecast);
-        lv.setAdapter(forecastAdapter);
+        lv.setAdapter(mForecastAdapter);
 
         return rootView;
     }
@@ -216,11 +218,10 @@ public class ForecastFragment extends Fragment {
                         .appendPath("daily")
                         .appendQueryParameter("q", params[0])
                         .appendQueryParameter("mode", "json")
-                        .appendQueryParameter("units", "metric")
+                        .appendQueryParameter("units", "imperial")
                         .appendQueryParameter("cnt", Integer.toString(numDays));
                 Uri uri = builder.build();
                 URL url = new URL(uri.toString());
-                Log.v(LOG_TAG, "Built URI " + uri.toString());
 
                 // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -250,7 +251,6 @@ public class ForecastFragment extends Fragment {
                     forecastJsonStr = null;
                 }
                 forecastJsonStr = buffer.toString();
-                Log.v(LOG_TAG,forecastJsonStr);
 
             } catch (IOException e) {
 
@@ -281,6 +281,14 @@ public class ForecastFragment extends Fragment {
 
             // This will only happen if there was an error getting or parsing the forecast.
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(String[] results) {
+            if (results != null) {
+                mForecastAdapter.clear();
+                mForecastAdapter.addAll(results);
+            }
         }
     }
 }
