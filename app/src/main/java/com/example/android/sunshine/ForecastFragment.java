@@ -1,9 +1,11 @@
 package com.example.android.sunshine;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -28,7 +30,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 
 
@@ -47,6 +48,13 @@ public class ForecastFragment extends Fragment {
         super.onCreate(savedInstanceState);
         // Add this line in order for this fragment to handle menu events.
         setHasOptionsMenu(true);
+
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
     }
 
     @Override
@@ -61,8 +69,7 @@ public class ForecastFragment extends Fragment {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
-            FetchWeatherTask weatherTask = new FetchWeatherTask();
-            weatherTask.execute("78521,USA");
+           updateWeather();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -73,22 +80,6 @@ public class ForecastFragment extends Fragment {
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_forecast, container, false);
 
-        // Create dummy data of forecasts
-        String[] forecastArray = {
-                "Today - Sunny - 88/63",
-                "Tomorrow - Foggy - 88/63",
-                "Wed - Cloudy - 88/63",
-                "Thu - Asteroids - 88/63",
-                "Fri - Heavy Rain - 88/63",
-                "Sat - HELP - 88/63",
-                "Sun - Sunny - 88/63",
-
-        };
-
-        ArrayList<String> weekForecast = new ArrayList<String>(
-                Arrays.asList(forecastArray)
-        );
-
         // Now that we have some dummy forecast data, create an ArrayAdapter.
         // The ArrayAdapter will take data from a source (like  your dummy forecast)
         // and use it to populate the ListView its attached to.
@@ -96,7 +87,7 @@ public class ForecastFragment extends Fragment {
                 getActivity(), // The current context
                 R.layout.list_item_forecast, // ID of list item layout
                 R.id.list_item_forecast_textview, // ID of textview to populate
-                weekForecast // Forecast data
+                new ArrayList<String>() // Forecast data
         );
 
         // set list adapter
@@ -300,5 +291,15 @@ public class ForecastFragment extends Fragment {
                 mForecastAdapter.addAll(results);
             }
         }
+    }
+
+    private void updateWeather(){
+        // Get location settings
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = prefs.getString(getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+
+        FetchWeatherTask weatherTask = new FetchWeatherTask();
+        weatherTask.execute(location+",USA");
     }
 }
